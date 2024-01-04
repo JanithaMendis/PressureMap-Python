@@ -23,20 +23,20 @@ def display_matrix_with_annotations(matrix, title):
 history_path = 'readings_history.csv'  # Using CSV instead of Excel
 
 # Function to update the database CSV file with a timestamp and full file path
-def update_database(history_path, timestamp, full_file_path):
+def update_database(history_path, timestamp, full_file_path, weight, total_area):
     # Check if the history file exists
     try:
         df_history = pd.read_csv(history_path)
     except FileNotFoundError:
         # If the file doesn't exist, create a new dataframe
-        df_history = pd.DataFrame(columns=['File', 'Timestamp'])
+        df_history = pd.DataFrame(columns=['File', 'Timestamp', 'Weight', 'TotalArea', 'File_name'])
 
     # Check if the file has columns
     if df_history.empty or 'File' not in df_history.columns or 'Timestamp' not in df_history.columns:
-        df_history = pd.DataFrame(columns=['File', 'Timestamp'])
+        df_history = pd.DataFrame(columns=['File', 'Timestamp', 'Weight', 'TotalArea', 'File_name'])
 
     # Append the new record to the dataframe
-    new_record = {'File': full_file_path, 'Timestamp': timestamp}
+    new_record = {'File': full_file_path, 'Timestamp': timestamp, 'Weight': weight, 'TotalArea': total_area, 'File_name': file_name}
     df_history = pd.concat([df_history, pd.DataFrame([new_record])], ignore_index=True)
 
     # Save the updated dataframe to the CSV file
@@ -60,10 +60,6 @@ flipped_matrix = np.flipud(matrix_average)
 
 # Display the flipped matrix with annotations
 display_matrix_with_annotations(flipped_matrix, 'Flipped Average Matrix of All Columns (Excluding Zeros)')
-
-# Update the history with the current file path and timestamp
-current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-update_database(history_path, current_timestamp, full_file_path)
 
 # Dimensions of the matrix square values
 dimension_1 = 46 / 32  # in cm
@@ -94,3 +90,7 @@ for i in range(flipped_matrix.shape[0]):
             total_area += dimension_1 * dimension_2 * 0.0001  # Convert cm^2 to m^2
 
 print(f"Total Area with Non-Zero Values: {total_area:.6f} square meters")
+
+# Update the history with the current file path, timestamp, weight, and total area
+current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+update_database(history_path, current_timestamp, full_file_path, weight, total_area)
