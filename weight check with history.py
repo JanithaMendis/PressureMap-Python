@@ -22,21 +22,21 @@ def display_matrix_with_annotations(matrix, title):
 # Creating a file path for updating the history
 history_path = 'readings_history.csv'  # Using CSV instead of Excel
 
-# Function to update the database CSV file with a timestamp, full file path, weight, total area, and actual weight
-def update_database(history_path, timestamp, full_file_path, weight, total_area, actual_weight, file_name):
+# Function to update the database CSV file with a timestamp, full file path, weight, total area, actual weight, and position
+def update_database(history_path, timestamp, full_file_path, weight, total_area, actual_weight, position, file_name):
     # Check if the history file exists
     try:
         df_history = pd.read_csv(history_path)
     except FileNotFoundError:
         # If the file doesn't exist, create a new dataframe
-        df_history = pd.DataFrame(columns=['File', 'Timestamp', 'Weight', 'TotalArea', 'ActualWeight', 'File_name'])
+        df_history = pd.DataFrame(columns=['File', 'Timestamp', 'Weight', 'TotalArea', 'ActualWeight', 'Position', 'File_name'])
 
     # Check if the file has columns
     if df_history.empty or 'File' not in df_history.columns or 'Timestamp' not in df_history.columns:
-        df_history = pd.DataFrame(columns=['File', 'Timestamp', 'Weight', 'TotalArea', 'ActualWeight', 'File_name'])
+        df_history = pd.DataFrame(columns=['File', 'Timestamp', 'Weight', 'TotalArea', 'ActualWeight', 'Position', 'File_name'])
 
     # Append the new record to the dataframe
-    new_record = {'File': full_file_path, 'Timestamp': timestamp, 'Weight': weight, 'TotalArea': total_area, 'ActualWeight': actual_weight, 'File_name': file_name}
+    new_record = {'File': full_file_path, 'Timestamp': timestamp, 'Weight': weight, 'TotalArea': total_area, 'ActualWeight': actual_weight, 'Position': position, 'File_name': file_name}
     df_history = pd.concat([df_history, pd.DataFrame([new_record])], ignore_index=True)
 
     # Save the updated dataframe to the CSV file
@@ -44,6 +44,15 @@ def update_database(history_path, timestamp, full_file_path, weight, total_area,
 
 # Prompt the user for the actual weight
 actual_weight = float(input("What is the actual weight? (in Kg): "))
+
+# Prompt the user for the position of the weights
+positions = ['left upper corner', 'right upper corner', 'left middle', 'right middle', 'left bottom corner', 'right bottom corner']
+print("Select the position of the weights:")
+for i, pos in enumerate(positions, start=1):
+    print(f"{i}. {pos}")
+
+selected_position_index = int(input("Enter the corresponding number for the position: "))
+selected_position = positions[selected_position_index - 1]
 
 # Get the full file path of the CSV file in the same folder as the PyCharm project
 file_name = '2.428kgnew_2.csv'  # Replace with your actual file name
@@ -94,6 +103,6 @@ for i in range(flipped_matrix.shape[0]):
 
 print(f"Total Area with Non-Zero Values: {total_area:.6f} square meters")
 
-# Update the history with the current file path, timestamp, weight, total area, and actual weight
+# Update the history with the current file path, timestamp, weight, total area, actual weight, and position
 current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-update_database(history_path, current_timestamp, full_file_path, weight, total_area, actual_weight, file_name)
+update_database(history_path, current_timestamp, full_file_path, weight, total_area, actual_weight, selected_position, file_name)
