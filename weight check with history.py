@@ -42,67 +42,121 @@ def update_database(history_path, timestamp, full_file_path, weight, total_area,
     # Save the updated dataframe to the CSV file
     df_history.to_csv(history_path, index=False)
 
-# Prompt the user for the actual weight
-actual_weight = float(input("What is the actual weight? (in Kg): "))
-
-# Prompt the user for the position of the weights
+# Define positions outside the block to make it accessible throughout the script
 positions = ['left upper corner', 'right upper corner', 'left middle', 'right middle', 'left bottom corner', 'right bottom corner']
-print("Select the position of the weights:")
-for i, pos in enumerate(positions, start=1):
-    print(f"{i}. {pos}")
 
-selected_position_index = int(input("Enter the corresponding number for the position: "))
-selected_position = positions[selected_position_index - 1]
+# Menu to ask the user what they need
+print("What do you need?")
+print("1. Weigh a weight")
+print("2. Retrieve an entry")
 
-# Get the full file path of the CSV file in the same folder as the PyCharm project
-file_name = '2.428kgnew_2.csv'  # Replace with your actual file name
-full_file_path = os.path.join(os.path.dirname(__file__), file_name)
+user_choice = input("Enter the corresponding number for your choice: ")
 
-# Load your data
-df = pd.read_csv(full_file_path).replace(0, np.nan)
+if user_choice == '1':
+    # Weigh a weight
 
-# Calculate the average of each column, ignoring null values and zeros
-average_values = df.mean(axis=0, skipna=True)
+    # Prompt the user for the actual weight
+    actual_weight = float(input("What is the actual weight? (in Kg): "))
 
-# Convert the average values to a numeric format and reshape to a 32x32 matrix
-matrix_average = pd.to_numeric(average_values, errors='coerce').fillna(0).values[:1024].reshape(32, 32)
+    # Prompt the user for the position of the weights
+    positions = ['left upper corner', 'right upper corner', 'left middle', 'right middle', 'left bottom corner', 'right bottom corner']
+    print("Select the position of the weights:")
+    for i, pos in enumerate(positions, start=1):
+        print(f"{i}. {pos}")
 
-# Flip the matrix around the x-axis
-flipped_matrix = np.flipud(matrix_average)
+    selected_position_index = int(input("Enter the corresponding number for the position: "))
+    selected_position = positions[selected_position_index - 1]
 
-# Display the flipped matrix with annotations
-display_matrix_with_annotations(flipped_matrix, 'Flipped Average Matrix of All Columns (Excluding Zeros)')
+    # Get the full file path of the CSV file in the same folder as the PyCharm project
+    file_name = '2.428kgnew_2.csv'  # Replace with your actual file name
+    full_file_path = os.path.join(os.path.dirname(__file__), file_name)
 
-# Dimensions of the matrix square values
-dimension_1 = 46 / 32  # in cm
-dimension_2 = 50 / 32  # in cm
+    # Load your data
+    df = pd.read_csv(full_file_path).replace(0, np.nan)
 
-# Calculate area in square meters
-area = dimension_1 * dimension_2 * 0.0001  # Convert cm^2 to m^2
+    # Calculate the average of each column, ignoring null values and zeros
+    average_values = df.mean(axis=0, skipna=True)
 
-# Convert mmHg to N/m^2
-mmHg_to_N_per_m2 = 133.322
+    # Convert the average values to a numeric format and reshape to a 32x32 matrix
+    matrix_average = pd.to_numeric(average_values, errors='coerce').fillna(0).values[:1024].reshape(32, 32)
 
-# Calculate total force
-total_force = np.sum(flipped_matrix) * area * mmHg_to_N_per_m2
+    # Flip the matrix around the x-axis
+    flipped_matrix = np.flipud(matrix_average)
 
-# Calculate weight in Kg
-weight = total_force / 9.81
+    # Display the flipped matrix with annotations
+    display_matrix_with_annotations(flipped_matrix, 'Flipped Average Matrix of All Columns (Excluding Zeros)')
 
-print(f"Weight: {weight:.4f} Kg")
+    # Dimensions of the matrix square values
+    dimension_1 = 46 / 32  # in cm
+    dimension_2 = 50 / 32  # in cm
 
-# Initialize total area
-total_area = 0
+    # Calculate area in square meters
+    area = dimension_1 * dimension_2 * 0.0001  # Convert cm^2 to m^2
 
-# Iterate through each cell in the matrix
-for i in range(flipped_matrix.shape[0]):
-    for j in range(flipped_matrix.shape[1]):
-        if flipped_matrix[i, j] != 0:
-            # If the matrix value is non-zero, add the corresponding area to the total
-            total_area += dimension_1 * dimension_2 * 0.0001  # Convert cm^2 to m^2
+    # Convert mmHg to N/m^2
+    mmHg_to_N_per_m2 = 133.322
 
-print(f"Total Area with Non-Zero Values: {total_area:.6f} square meters")
+    # Calculate total force
+    total_force = np.sum(flipped_matrix) * area * mmHg_to_N_per_m2
 
-# Update the history with the current file path, timestamp, weight, total area, actual weight, and position
-current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-update_database(history_path, current_timestamp, full_file_path, weight, total_area, actual_weight, selected_position, file_name)
+    # Calculate weight in Kg
+    weight = total_force / 9.81
+
+    print(f"Weight: {weight:.4f} Kg")
+
+    # Initialize total area
+    total_area = 0
+
+    # Iterate through each cell in the matrix
+    for i in range(flipped_matrix.shape[0]):
+        for j in range(flipped_matrix.shape[1]):
+            if flipped_matrix[i, j] != 0:
+                # If the matrix value is non-zero, add the corresponding area to the total
+                total_area += dimension_1 * dimension_2 * 0.0001  # Convert cm^2 to m^2
+
+    print(f"Total Area with Non-Zero Values: {total_area:.6f} square meters")
+
+    # Update the history with the current file path, timestamp, weight, total area, actual weight, and position
+    current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    update_database(history_path, current_timestamp, full_file_path, weight, total_area, actual_weight, selected_position, file_name)
+
+elif user_choice == '2':
+    # Retrieve an entry
+
+    # Prompt the user for the actual weight
+    actual_weight = float(input("Enter the actual weight for retrieval (in Kg): "))
+
+    # Prompt the user for the position of the weights
+    print("Select the position of the weights:")
+    for i, pos in enumerate(positions, start=1):
+        print(f"{i}. {pos}")
+
+    selected_position_index = int(input("Enter the corresponding number for the position: "))
+    selected_position = positions[selected_position_index - 1]
+
+    # Load the history file
+    try:
+        df_history = pd.read_csv(history_path)
+    except FileNotFoundError:
+        print("History file not found.")
+        exit()
+
+    # Filter entries based on user input
+    filtered_entries = df_history[(df_history['ActualWeight'] == actual_weight) & (df_history['Position'] == selected_position)]
+
+    if not filtered_entries.empty:
+        # Display the retrieved entries
+        print("\nRetrieved Entries:")
+        for index, row in filtered_entries.iterrows():
+            print(f"Timestamp: {row['Timestamp']}")
+            print(f"File Path: {row['File']}")
+            print(f"Weight: {row['Weight']} Kg")
+            print(f"Total Area: {row['TotalArea']} square meters")
+            print(f"Actual Weight: {row['ActualWeight']} Kg")
+            print(f"Position: {row['Position']}")
+            print("\n")
+    else:
+        print("No entries found for the given criteria.")
+
+else:
+    print("Invalid choice. Please select a valid option.")
