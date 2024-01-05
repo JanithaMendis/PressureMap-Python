@@ -158,3 +158,27 @@ elif user_choice == '2':
         print("No entries found for the given criteria.")
 else:
     print("Invalid choice. Please select a valid option.")
+
+# Identify the column with the highest average value
+highest_column_index = np.argmax(average_values)
+
+# Get the 20 multiples of the number of rows
+multiples_of_rows = np.arange(20) * len(df)
+
+# Identify the column with the highest average value
+highest_column_index = np.argmax(average_values)
+
+# Get the 20 multiples of the number of rows
+multiples_of_rows = np.arange(20) * len(df)
+
+# Plotting the graph using the data from the file_name CSV file
+plt.figure(figsize=(10, 6))
+for i in range(20):
+    plt.plot(df.iloc[i * len(df):(i + 1) * len(df), highest_column_index].values, marker='o', label=f'Row Multiple {i + 1}')
+
+plt.title(f'Highest Value Column ({highest_column_index}) Against 20 Multiples of Rows')
+plt.xlabel('Column Index')
+plt.ylabel('Column Value')
+plt.legend()
+plt.grid(True)
+plt.show()
