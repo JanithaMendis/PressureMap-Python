@@ -59,7 +59,6 @@ if user_choice == '1':
     actual_weight = float(input("What is the actual weight? (in Kg): "))
 
     # Prompt the user for the position of the weights
-    positions = ['left upper corner', 'right upper corner', 'left middle', 'right middle', 'left bottom corner', 'right bottom corner']
     print("Select the position of the weights:")
     for i, pos in enumerate(positions, start=1):
         print(f"{i}. {pos}")
@@ -68,11 +67,11 @@ if user_choice == '1':
     selected_position = positions[selected_position_index - 1]
 
     # Get the full file path of the CSV file in the same folder as the PyCharm project
-    file_name = '2.428kgnew_2.csv'  # Replace with your actual file name
+    file_name = '1.628kgnew11.csv'  # Replace with your actual file name
     full_file_path = os.path.join(os.path.dirname(__file__), file_name)
 
-    # Load your data
-    df = pd.read_csv(full_file_path).replace(0, np.nan)
+    # Load your data and skip the first 12 columns and the first row
+    df = pd.read_csv(full_file_path, skiprows=1, usecols=list(range(12, 1036))).replace(0, np.nan)
 
     # Calculate the average of each column, ignoring null values and zeros
     average_values = df.mean(axis=0, skipna=True)
@@ -121,7 +120,6 @@ if user_choice == '1':
     update_database(history_path, current_timestamp, full_file_path, weight, total_area, actual_weight, selected_position, file_name)
 
 elif user_choice == '2':
-    # Retrieve an entry
 
     # Prompt the user for the actual weight
     actual_weight = float(input("Enter the actual weight for retrieval (in Kg): "))
@@ -142,7 +140,8 @@ elif user_choice == '2':
         exit()
 
     # Filter entries based on user input
-    filtered_entries = df_history[(df_history['ActualWeight'] == actual_weight) & (df_history['Position'] == selected_position)]
+    filtered_entries = df_history[
+        (df_history['ActualWeight'] == actual_weight) & (df_history['Position'] == selected_position)]
 
     if not filtered_entries.empty:
         # Display the retrieved entries
@@ -157,6 +156,5 @@ elif user_choice == '2':
             print("\n")
     else:
         print("No entries found for the given criteria.")
-
 else:
     print("Invalid choice. Please select a valid option.")
