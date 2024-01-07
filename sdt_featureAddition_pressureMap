@@ -5,14 +5,21 @@ from datetime import datetime
 import os
 
 # Function to display a matrix with values annotated in each cell
-def display_matrix_with_annotations(matrix, title):
-    fig, ax = plt.subplots(figsize=(15, 15))  # Increased figure size for larger cells
-    cax = ax.matshow(matrix, cmap='binary')  # Using 'binary' colormap for black and white
+def display_matrix_with_annotations(matrix, title, integer_values=True, cell_size=15):
+    fig, ax = plt.subplots(figsize=(cell_size, cell_size))  # Increased figure size for larger cells
+    cax = ax.matshow(matrix, cmap='viridis')  # Using 'viridis' colormap for better visualization
 
-    # Annotating each cell with the integer value
+    # Annotating each cell with the integer or float value
     for i in range(matrix.shape[0]):
         for j in range(matrix.shape[1]):
-            ax.text(j, i, f'{int(matrix[i, j])}', va='center', ha='center', color='blue', fontsize=8)
+            value = matrix[i, j]
+            if not np.isnan(value):
+                if integer_values:
+                    ax.text(j, i, f'{int(value)}', va='center', ha='center', color='blue', fontsize=8)
+                else:
+                    ax.text(j, i, f'{value:.2f}', va='center', ha='center', color='blue', fontsize=8)
+            else:
+                ax.text(j, i, '', va='center', ha='center', color='blue', fontsize=8)
 
     plt.title(title)
     plt.axis('off')
@@ -74,7 +81,7 @@ if user_choice == '1':
     df = pd.read_csv(full_file_path, skiprows=1, usecols=list(range(12, 1036))).replace(0, np.nan)
 
     # Calculate the average of each column, ignoring null values and zeros
-    average_values = df.apply(lambda x: np.nanmean(x), axis=0)
+    average_values = df.mean(axis=0, skipna=True)
 
     # Convert the average values to a numeric format and reshape to a 32x32 matrix
     matrix_average = pd.to_numeric(average_values, errors='coerce').fillna(0).values[:1024].reshape(32, 32)
@@ -82,8 +89,11 @@ if user_choice == '1':
     # Flip the matrix around the x-axis
     flipped_matrix = np.flipud(matrix_average)
 
-    # Display the flipped matrix with annotations
+    # Display the flipped matrix with annotations (showing integer values)
     display_matrix_with_annotations(flipped_matrix, 'Flipped Average Matrix of All Columns (Excluding Zeros)')
+
+    # Calculate the non-zero average value of the initially plotted matrix
+    non_zero_average_value = np.nanmean(flipped_matrix[flipped_matrix != 0])
 
     # Dimensions of the matrix square values
     dimension_1 = 46 / 32  # in cm
@@ -118,6 +128,19 @@ if user_choice == '1':
     # Update the history with the current file path, timestamp, weight, total area, actual weight, and position
     current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     update_database(history_path, current_timestamp, full_file_path, weight, total_area, actual_weight, selected_position, file_name)
+
+    # Calculate the standard deviation for each column using only the non-zero values in that column
+    std_matrix_values = df.apply(lambda x: np.std(x[x != 0] - non_zero_average_value), axis=0)
+
+    # Reshape the std_matrix to a 32x32 matrix
+    std_matrix_reshaped = std_matrix_values.values.reshape(32, 32)
+
+    # Flip the std_matrix around the x-axis
+    flipped_std_matrix = np.flipud(std_matrix_reshaped)
+
+    # Display the flipped standard deviation matrix with annotations (showing float values) and increased cell size
+    display_matrix_with_annotations(flipped_std_matrix, 'Flipped Standard Deviation Matrix of Columns (Excluding Zeros)', integer_values=False, cell_size=20)
+
 
 elif user_choice == '2':
 
@@ -156,25 +179,3 @@ elif user_choice == '2':
             print("\n")
     else:
         print("No entries found for the given criteria.")
-else:
-    print("Invalid choice. Please select a valid option.")
-
-non_zero_averages = df.apply(lambda x: np.nanmean(x[x.notna()]), axis=0)
-std_matrix = df.apply(lambda x: np.std(x[x.notna()] - non_zero_averages[x.name]), axis=1)
-
-
-std_matrix_reshaped = np.full((32, 32), 'NA', dtype=object)
-std_matrix_values = std_matrix.values
-
-if std_matrix_values.size <= std_matrix_reshaped.size:
-    std_matrix_reshaped[:std_matrix_values.size] = std_matrix_values.reshape(32, -1)
-else:
-    std_matrix_reshaped[:, :std_matrix_values.size] = std_matrix_values.reshape(-1, 32)
-std_matrix_values = std_matrix.values
-
-# Flip the std_matrix around the x-axis
-flipped_std_matrix = np.flipud(std_matrix_reshaped)
-
-# Display the flipped standard deviation matrix with annotations
-display_matrix_with_annotations(flipped_std_matrix, 'Flipped Standard Deviation Matrix of Rows (Including NAs)')
-
