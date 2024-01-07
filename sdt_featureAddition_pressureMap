@@ -50,7 +50,7 @@ def update_database(history_path, timestamp, full_file_path, weight, total_area,
     df_history.to_csv(history_path, index=False)
 
 # Define positions outside the block to make it accessible throughout the script
-positions = ['left upper corner', 'right upper corner', 'left middle', 'right middle', 'left bottom corner', 'right bottom corner']
+positions = ['left upper corner', 'right upper corner', 'Upper middle', 'left middle', 'middle middle', 'right middle', 'Bottom middle', 'left bottom corner', 'right bottom corner']
 
 # Menu to ask the user what they need
 print("What do you need?")
