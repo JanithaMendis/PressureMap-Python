@@ -5,29 +5,32 @@ from datetime import datetime
 import os
 
 # Function to display a matrix with values annotated in each cell
-def display_matrix_with_annotations(matrix, title, integer_values=True, cell_size=15):
-    fig, ax = plt.subplots(figsize=(cell_size, cell_size))  # Increased figure size for larger cells
-    cax = ax.matshow(matrix, cmap='viridis')  # Using 'viridis' colormap for better visualization
+def display_matrix_with_annotations(matrix, title, integer_values=True, cell_size1=15, cell_size2=15):
+    fig, ax = plt.subplots(figsize=(cell_size1, cell_size2))  # Increased figure size for larger cells
 
-    # Annotating each cell with the integer or float value
+    if matrix.ndim == 1:
+        matrix = matrix.reshape(1, -1)
+
+    cax = ax.matshow(matrix, cmap='viridis', extent=(0, matrix.shape[1] * cell_size1, matrix.shape[0] * cell_size2, 0))
+
     for i in range(matrix.shape[0]):
         for j in range(matrix.shape[1]):
             value = matrix[i, j]
-            if not np.isnan(value):
-                if integer_values:
-                    ax.text(j, i, f'{int(value)}', va='center', ha='center', color='blue', fontsize=8)
-                else:
-                    ax.text(j, i, f'{value:.2f}', va='center', ha='center', color='blue', fontsize=8)
+            x_position = j * cell_size1 + cell_size1 / 2
+            y_position = i * cell_size2 + cell_size2 / 2
+            if np.isnan(value):
+                ax.text(x_position, y_position, '', va='center', ha='center', color='blue', fontsize=8)
             else:
-                ax.text(j, i, '', va='center', ha='center', color='blue', fontsize=8)
+                if integer_values:
+                    ax.text(x_position, y_position, f'{int(value)}', va='center', ha='center', color='blue', fontsize=8)
+                else:
+                    ax.text(x_position, y_position, f'{value:.2f}', va='center', ha='center', color='blue', fontsize=8)
 
     plt.title(title)
     plt.axis('off')
     fig.colorbar(cax)
+    plt.tight_layout()
     plt.show()
-
-# Creating a file path for updating the history
-history_path = 'readings_history.csv'  # Using CSV instead of Excel
 
 # Function to update the database CSV file with a timestamp, full file path, weight, total area, actual weight, and position
 def update_database(history_path, timestamp, full_file_path, weight, total_area, actual_weight, position, file_name):
@@ -51,6 +54,9 @@ def update_database(history_path, timestamp, full_file_path, weight, total_area,
 
 # Define positions outside the block to make it accessible throughout the script
 positions = ['left upper corner', 'right upper corner', 'Upper middle', 'left middle', 'middle middle', 'right middle', 'Bottom middle', 'left bottom corner', 'right bottom corner']
+
+# Creating a file path for updating the history
+history_path = 'readings_history.csv'  # Using CSV instead of Excel
 
 # Menu to ask the user what they need
 print("What do you need?")
@@ -90,7 +96,7 @@ if user_choice == '1':
     flipped_matrix = np.flipud(matrix_average)
 
     # Display the flipped matrix with annotations (showing integer values)
-    display_matrix_with_annotations(flipped_matrix, 'Flipped Average Matrix of All Columns (Excluding Zeros)')
+    display_matrix_with_annotations(flipped_matrix, 'Flipped Average Matrix of All Columns (Excluding Zeros)', cell_size1=15, cell_size2=15)
 
     # Calculate the non-zero average value of the initially plotted matrix
     non_zero_average_value = np.nanmean(flipped_matrix[flipped_matrix != 0])
@@ -139,7 +145,7 @@ if user_choice == '1':
     flipped_std_matrix = np.flipud(std_matrix_reshaped)
 
     # Display the flipped standard deviation matrix with annotations (showing float values) and increased cell size
-    display_matrix_with_annotations(flipped_std_matrix, 'Flipped Standard Deviation Matrix of Columns (Excluding Zeros)', integer_values=False, cell_size=20)
+    display_matrix_with_annotations(flipped_std_matrix, 'Flipped Standard Deviation Matrix of Columns (Excluding Zeros)', integer_values=False, cell_size1=45, cell_size2=25)
 
 
 elif user_choice == '2':
