@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import os
 
-# Function to display a matrix with values annotated in each cell
+
 def display_matrix_with_annotations(matrix, title, integer_values=True, cell_size1=15, cell_size2=15):
-    fig, ax = plt.subplots(figsize=(cell_size1, cell_size2))  # Increased figure size for larger cells
+    fig, ax = plt.subplots(figsize=(cell_size1, cell_size2))
 
     if matrix.ndim == 1:
         matrix = matrix.reshape(1, -1)
@@ -32,156 +32,186 @@ def display_matrix_with_annotations(matrix, title, integer_values=True, cell_siz
     plt.tight_layout()
     plt.show()
 
-# Function to update the database CSV file with a timestamp, full file path, weight, total area, actual weight, and position
-def update_database(history_path, timestamp, full_file_path, weight, total_area, actual_weight, position, file_name):
-    # Check if the history file exists
+
+def save_matrix_plot(matrix, title, save_folder, actual_weight, position, timestamp, plot_type='average',
+                     integer_values=True, cell_size1=15, cell_size2=15):
+    fig, ax = plt.subplots(figsize=(cell_size1, cell_size2))
+
+    if matrix.ndim == 1:
+        matrix = matrix.reshape(1, -1)
+
+    cax = ax.matshow(matrix, cmap='viridis', extent=(0, matrix.shape[1] * cell_size1, matrix.shape[0] * cell_size2, 0))
+
+    for i in range(matrix.shape[0]):
+        for j in range(matrix.shape[1]):
+            value = matrix[i, j]
+            x_position = j * cell_size1 + cell_size1 / 2
+            y_position = i * cell_size2 + cell_size2 / 2
+            if np.isnan(value):
+                ax.text(x_position, y_position, '', va='center', ha='center', color='blue', fontsize=8)
+            else:
+                if integer_values:
+                    ax.text(x_position, y_position, f'{int(value)}', va='center', ha='center', color='blue', fontsize=8)
+                else:
+                    ax.text(x_position, y_position, f'{value:.2f}', va='center', ha='center', color='blue', fontsize=8)
+
+    plt.title(title)
+    plt.axis('off')
+    fig.colorbar(cax)
+    plt.tight_layout()
+
+    # Convert timestamp string to datetime object
+    datetime_obj = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+
+    # Remove the seconds part
+    timestamp_without_seconds = datetime_obj.replace(second=0).strftime('%Y-%m-%d %H:%M')
+
+    print(f"Debug: cycle_folder = {timestamp_without_seconds}")
+    timestamp_for_folder = timestamp_without_seconds.replace(":", "_" )
+    cycle_folder0 = os.path.join(save_folder, "Cycle_folder")
+    os.makedirs(cycle_folder0, exist_ok=True)
+    cycle_folder = os.path.join(cycle_folder0, f'{actual_weight}_{position}_{timestamp_for_folder}')
+
+    os.makedirs(cycle_folder, exist_ok=True)
+
+
+    plot_type_str = 'average' if plot_type == 'average' else 'std_dev'
+    file_name = f'{actual_weight}_{position}_{timestamp_for_folder}_{plot_type_str}_matrix_plot.png'
+
+    file_path = os.path.join(cycle_folder, file_name)
+    plt.savefig(file_path)
+    plt.close()
+
+    return file_path, cycle_folder
+
+
+def update_database(history_path, timestamp, full_file_path, weight, total_area, actual_weight, position, file_name,
+                    cycle_folder):
     try:
         df_history = pd.read_csv(history_path)
     except FileNotFoundError:
-        # If the file doesn't exist, create a new dataframe
-        df_history = pd.DataFrame(columns=['File', 'Timestamp', 'Weight', 'TotalArea', 'ActualWeight', 'Position', 'File_name'])
+        df_history = pd.DataFrame(
+            columns=['File', 'Timestamp', 'Weight', 'TotalArea', 'ActualWeight', 'Position', 'File_name',
+                     'CycleFolder'])
 
-    # Check if the file has columns
     if df_history.empty or 'File' not in df_history.columns or 'Timestamp' not in df_history.columns:
-        df_history = pd.DataFrame(columns=['File', 'Timestamp', 'Weight', 'TotalArea', 'ActualWeight', 'Position', 'File_name'])
+        df_history = pd.DataFrame(
+            columns=['File', 'Timestamp', 'Weight', 'TotalArea', 'ActualWeight', 'Position', 'File_name',
+                     'CycleFolder'])
 
-    # Append the new record to the dataframe
-    new_record = {'File': full_file_path, 'Timestamp': timestamp, 'Weight': weight, 'TotalArea': total_area, 'ActualWeight': actual_weight, 'Position': position, 'File_name': file_name}
+    new_record = {'File': full_file_path, 'Timestamp': timestamp, 'Weight': weight, 'TotalArea': total_area,
+                  'ActualWeight': actual_weight, 'Position': position, 'File_name': file_name,
+                  'CycleFolder': cycle_folder}
     df_history = pd.concat([df_history, pd.DataFrame([new_record])], ignore_index=True)
 
-    # Save the updated dataframe to the CSV file
     df_history.to_csv(history_path, index=False)
 
-# Define positions outside the block to make it accessible throughout the script
-positions = ['left upper corner', 'right upper corner', 'Upper middle', 'left middle', 'middle middle', 'right middle', 'Bottom middle', 'left bottom corner', 'right bottom corner']
 
-# Creating a file path for updating the history
-history_path = 'readings_history.csv'  # Using CSV instead of Excel
+if __name__ == "__main__":
+    positions = ['left upper corner', 'right upper corner', 'Upper middle', 'left middle', 'middle middle',
+                 'right middle', 'Bottom middle', 'left bottom corner', 'right bottom corner']
+    history_path = 'readings_history.csv'
 
-# Menu to ask the user what they need
-print("What do you need?")
-print("1. Weigh a weight")
-print("2. Retrieve an entry")
+    print("What do you need?")
+    print("1. Weigh a weight")
+    print("2. Retrieve an entry")
 
-user_choice = input("Enter the corresponding number for your choice: ")
+    user_choice = input("Enter the corresponding number for your choice: ")
 
-if user_choice == '1':
-    # Weigh a weight
+    if user_choice == '1':
+        actual_weight = float(input("What is the actual weight? (in Kg): "))
+        print("Select the position of the weights:")
 
-    # Prompt the user for the actual weight
-    actual_weight = float(input("What is the actual weight? (in Kg): "))
+        for i, pos in enumerate(positions, start=1):
+            print(f"{i}. {pos}")
 
-    # Prompt the user for the position of the weights
-    print("Select the position of the weights:")
-    for i, pos in enumerate(positions, start=1):
-        print(f"{i}. {pos}")
+        selected_position_index = int(input("Enter the corresponding number for the position: "))
+        selected_position = positions[selected_position_index - 1]
 
-    selected_position_index = int(input("Enter the corresponding number for the position: "))
-    selected_position = positions[selected_position_index - 1]
+        file_name = '1.628kgnew11.csv'
+        full_file_path = os.path.join(os.path.dirname(__file__), file_name)
 
-    # Get the full file path of the CSV file in the same folder as the PyCharm project
-    file_name = '1.628kgnew11.csv'  # Replace with your actual file name
-    full_file_path = os.path.join(os.path.dirname(__file__), file_name)
+        df = pd.read_csv(full_file_path, skiprows=1, usecols=list(range(12, 1036))).replace(0, np.nan)
+        average_values = df.mean(axis=0, skipna=True)
+        matrix_average = pd.to_numeric(average_values, errors='coerce').fillna(0).values[:1024].reshape(32, 32)
+        flipped_matrix = np.flipud(matrix_average)
 
-    # Load your data and skip the first 12 columns and the first row
-    df = pd.read_csv(full_file_path, skiprows=1, usecols=list(range(12, 1036))).replace(0, np.nan)
+        display_matrix_with_annotations(flipped_matrix, 'Flipped Average Matrix of All Columns (Excluding Zeros)',
+                                        cell_size1=15, cell_size2=15)
 
-    # Calculate the average of each column, ignoring null values and zeros
-    average_values = df.mean(axis=0, skipna=True)
+        non_zero_average_value = np.nanmean(flipped_matrix[flipped_matrix != 0])
 
-    # Convert the average values to a numeric format and reshape to a 32x32 matrix
-    matrix_average = pd.to_numeric(average_values, errors='coerce').fillna(0).values[:1024].reshape(32, 32)
+        dimension_1 = 46 / 32
+        dimension_2 = 50 / 32
+        area = dimension_1 * dimension_2 * 0.0001
+        mmHg_to_N_per_m2 = 133.322
+        total_force = np.sum(flipped_matrix) * area * mmHg_to_N_per_m2
+        weight = total_force / 9.81
 
-    # Flip the matrix around the x-axis
-    flipped_matrix = np.flipud(matrix_average)
+        print(f"Weight: {weight:.4f} Kg")
 
-    # Display the flipped matrix with annotations (showing integer values)
-    display_matrix_with_annotations(flipped_matrix, 'Flipped Average Matrix of All Columns (Excluding Zeros)', cell_size1=15, cell_size2=15)
+        total_area = 0
+        for i in range(flipped_matrix.shape[0]):
+            for j in range(flipped_matrix.shape[1]):
+                if flipped_matrix[i, j] != 0:
+                    total_area += dimension_1 * dimension_2 * 0.0001
 
-    # Calculate the non-zero average value of the initially plotted matrix
-    non_zero_average_value = np.nanmean(flipped_matrix[flipped_matrix != 0])
+        print(f"Total Area with Non-Zero Values: {total_area:.6f} square meters")
 
-    # Dimensions of the matrix square values
-    dimension_1 = 46 / 32  # in cm
-    dimension_2 = 50 / 32  # in cm
+        current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        matrix_file_path, cycle_folder = save_matrix_plot(flipped_matrix,
+                                                          'Flipped Average Matrix of All Columns (Excluding Zeros)',
+                                                          os.path.dirname(__file__),
+                                                          actual_weight, selected_position,
+                                                          datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                                          plot_type='average', integer_values=True, cell_size1=15,
+                                                          cell_size2=15)
 
-    # Calculate area in square meters
-    area = dimension_1 * dimension_2 * 0.0001  # Convert cm^2 to m^2
+        update_database(history_path, current_timestamp, full_file_path, weight, total_area, actual_weight,
+                        selected_position, file_name, cycle_folder)
 
-    # Convert mmHg to N/m^2
-    mmHg_to_N_per_m2 = 133.322
+        std_matrix_values = df.apply(lambda x: np.std(x[x != 0] - non_zero_average_value), axis=0)
+        std_matrix_reshaped = std_matrix_values.values.reshape(32, 32)
+        flipped_std_matrix = np.flipud(std_matrix_reshaped)
 
-    # Calculate total force
-    total_force = np.sum(flipped_matrix) * area * mmHg_to_N_per_m2
+        display_matrix_with_annotations(flipped_std_matrix,
+                                        'Flipped Standard Deviation Matrix of Columns (Excluding Zeros)',
+                                        integer_values=False, cell_size1=45, cell_size2=25)
 
-    # Calculate weight in Kg
-    weight = total_force / 9.81
+        std_matrix_file_path = save_matrix_plot(flipped_std_matrix,
+                                                'Flipped Standard Deviation Matrix of Columns (Excluding Zeros)',
+                                                os.path.dirname(__file__), actual_weight, selected_position,
+                                                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                                plot_type='std_dev', integer_values=False, cell_size1=45, cell_size2=25)
 
-    print(f"Weight: {weight:.4f} Kg")
+    elif user_choice == '2':
+        actual_weight = float(input("Enter the actual weight for retrieval (in Kg): "))
+        print("Select the position of the weights:")
 
-    # Initialize total area
-    total_area = 0
+        for i, pos in enumerate(positions, start=1):
+            print(f"{i}. {pos}")
 
-    # Iterate through each cell in the matrix
-    for i in range(flipped_matrix.shape[0]):
-        for j in range(flipped_matrix.shape[1]):
-            if flipped_matrix[i, j] != 0:
-                # If the matrix value is non-zero, add the corresponding area to the total
-                total_area += dimension_1 * dimension_2 * 0.0001  # Convert cm^2 to m^2
+        selected_position_index = int(input("Enter the corresponding number for the position: "))
+        selected_position = positions[selected_position_index - 1]
 
-    print(f"Total Area with Non-Zero Values: {total_area:.6f} square meters")
+        try:
+            df_history = pd.read_csv(history_path)
+        except FileNotFoundError:
+            print("History file not found.")
+            exit()
 
-    # Update the history with the current file path, timestamp, weight, total area, actual weight, and position
-    current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    update_database(history_path, current_timestamp, full_file_path, weight, total_area, actual_weight, selected_position, file_name)
+        filtered_entries = df_history[
+            (df_history['ActualWeight'] == actual_weight) & (df_history['Position'] == selected_position)]
 
-    # Calculate the standard deviation for each column using only the non-zero values in that column
-    std_matrix_values = df.apply(lambda x: np.std(x[x != 0] - non_zero_average_value), axis=0)
-
-    # Reshape the std_matrix to a 32x32 matrix
-    std_matrix_reshaped = std_matrix_values.values.reshape(32, 32)
-
-    # Flip the std_matrix around the x-axis
-    flipped_std_matrix = np.flipud(std_matrix_reshaped)
-
-    # Display the flipped standard deviation matrix with annotations (showing float values) and increased cell size
-    display_matrix_with_annotations(flipped_std_matrix, 'Flipped Standard Deviation Matrix of Columns (Excluding Zeros)', integer_values=False, cell_size1=45, cell_size2=25)
-
-
-elif user_choice == '2':
-
-    # Prompt the user for the actual weight
-    actual_weight = float(input("Enter the actual weight for retrieval (in Kg): "))
-
-    # Prompt the user for the position of the weights
-    print("Select the position of the weights:")
-    for i, pos in enumerate(positions, start=1):
-        print(f"{i}. {pos}")
-
-    selected_position_index = int(input("Enter the corresponding number for the position: "))
-    selected_position = positions[selected_position_index - 1]
-
-    # Load the history file
-    try:
-        df_history = pd.read_csv(history_path)
-    except FileNotFoundError:
-        print("History file not found.")
-        exit()
-
-    # Filter entries based on user input
-    filtered_entries = df_history[
-        (df_history['ActualWeight'] == actual_weight) & (df_history['Position'] == selected_position)]
-
-    if not filtered_entries.empty:
-        # Display the retrieved entries
-        print("\nRetrieved Entries:")
-        for index, row in filtered_entries.iterrows():
-            print(f"Timestamp: {row['Timestamp']}")
-            print(f"File Path: {row['File']}")
-            print(f"Weight: {row['Weight']} Kg")
-            print(f"Total Area: {row['TotalArea']} square meters")
-            print(f"Actual Weight: {row['ActualWeight']} Kg")
-            print(f"Position: {row['Position']}")
-            print("\n")
-    else:
-        print("No entries found for the given criteria.")
+        if not filtered_entries.empty:
+            print("\nRetrieved Entries:")
+            for index, row in filtered_entries.iterrows():
+                print(f"Timestamp: {row['Timestamp']}")
+                print(f"File Path: {row['File']}")
+                print(f"Weight: {row['Weight']} Kg")
+                print(f"Total Area: {row['TotalArea']} square meters")
+                print(f"Actual Weight: {row['ActualWeight']} Kg")
+                print(f"Position: {row['Position']}")
+                print("\n")
+        else:
+            print("No entries found for the given criteria.")
