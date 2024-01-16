@@ -86,22 +86,22 @@ def save_matrix_plot(matrix, title, save_folder, actual_weight, position, timest
 
 
 def update_database(history_path, timestamp, full_file_path, weight, total_area, actual_weight, position, file_name,
-                    cycle_folder):
+                    cycle_folder, non_zero_count, non_zero_average):
     try:
         df_history = pd.read_csv(history_path)
     except FileNotFoundError:
         df_history = pd.DataFrame(
             columns=['File', 'Timestamp', 'Weight', 'TotalArea', 'ActualWeight', 'Position', 'File_name',
-                     'CycleFolder'])
+                     'CycleFolder', 'non_zero_count', 'Standard Pressure per Cell'])
 
     if df_history.empty or 'File' not in df_history.columns or 'Timestamp' not in df_history.columns:
         df_history = pd.DataFrame(
             columns=['File', 'Timestamp', 'Weight', 'TotalArea', 'ActualWeight', 'Position', 'File_name',
-                     'CycleFolder'])
+                     'CycleFolder', 'non_zero_count', 'Standard Pressure per Cell'])
 
     new_record = {'File': full_file_path, 'Timestamp': timestamp, 'Weight': weight, 'TotalArea': total_area,
                   'ActualWeight': actual_weight, 'Position': position, 'File_name': file_name,
-                  'CycleFolder': cycle_folder}
+                  'CycleFolder': cycle_folder, 'non_zero_count': non_zero_count, 'Standard Pressure per Cell': non_zero_average }
     df_history = pd.concat([df_history, pd.DataFrame([new_record])], ignore_index=True)
 
     df_history.to_csv(history_path, index=False)
@@ -158,6 +158,13 @@ if __name__ == "__main__":
 
         print(f"Total Area with Non-Zero Values: {total_area:.6f} square meters")
 
+        non_zero_values = flipped_matrix[flipped_matrix != 0]
+        non_zero_count = len(non_zero_values)
+        non_zero_average = np.mean(non_zero_values)
+        print(f"Non-Zero Values Count: {non_zero_count}")
+        print(f"Standard Pressure value per Cell: {non_zero_average:.6f} mmHg")
+
+
         current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         matrix_file_path, cycle_folder = save_matrix_plot(flipped_matrix,
                                                           'Flipped Average Matrix of All Columns (Excluding Zeros)',
@@ -168,7 +175,7 @@ if __name__ == "__main__":
                                                           cell_size2=15)
 
         update_database(history_path, current_timestamp, full_file_path, weight, total_area, actual_weight,
-                        selected_position, file_name, cycle_folder)
+                        selected_position, file_name, cycle_folder, non_zero_count, non_zero_average )
 
         std_matrix_values = df.apply(lambda x: np.std(x[x != 0] - non_zero_average_value), axis=0)
         std_matrix_reshaped = std_matrix_values.values.reshape(32, 32)
