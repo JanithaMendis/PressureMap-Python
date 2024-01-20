@@ -21,7 +21,7 @@ def read_csv_data(file_path):
                     index = i * 32 + j + 12  # Adjusted index to start from column 12
                     data[i, j, z] = float(row[index])
 
-    return data
+    return data, num_rows
 
 def select_and_plot_deviation(data):
     # Randomly select four (i, j) cells with at least some non-zero values
@@ -46,8 +46,10 @@ def select_and_plot_deviation(data):
     plt.legend()
     plt.show()
 
-data = read_csv_data(csv_file_path)
+# Unpack the values returned by read_csv_data
+data, num_rows = read_csv_data(csv_file_path)
 print(data.shape)  # (32, 32, number_rows)
+print(f"Number of rows in the CSV file: {num_rows}")
 
 # Call the function to select and plot deviation for four random cells
 select_and_plot_deviation(data)
