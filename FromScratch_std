@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 csv_file_path = 'C:\\Users\\Janitha Mendis\\PycharmProjects\\PressureMap1\\testing10kgMM.csv'
 
+
 def read_csv_data(file_path):
     with open(file_path) as f:
         csv_reader = csv.reader(f)
@@ -22,6 +23,7 @@ def read_csv_data(file_path):
                     data[i, j, z] = float(row[index])
 
     return data, num_rows
+
 
 def select_and_plot_deviation(data, start_time=0, end_time=None):
     # Randomly select four (i, j) cells with at least some non-zero values
@@ -56,7 +58,7 @@ def select_and_plot_deviation(data, start_time=0, end_time=None):
     plt.xlabel('Time')
     plt.ylabel('Cell Value')
     plt.title('Deviation of Cell Values with Different Time Readings')
-    #plt.legend()
+    plt.legend()
     plt.show()
 
 
@@ -79,11 +81,44 @@ def plot_array_at_second(data, time):
                 plt.text(j + 0.5, i + 0.5, f'{int(values_at_time[i, j])}', color='black',
                          ha='center', va='center', fontsize=8)
 
+        # Annotate standard deviation among non-zero cells
+        plt.annotate(f'Non-Zero SD: {std_deviation:.2f}', xy=(0.5, 32.5), xytext=(0, 10),
+                     textcoords='offset points', ha='center', va='bottom',
+                     bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.5))
+
         plt.colorbar(label='Cell Value')
         plt.title(f'Cell Values at Second {time} with Non-Zero Std Deviation: {std_deviation:.2f}')
-        plt.xlabel('Column Index')
         plt.ylabel('Row Index')
         plt.show()
+
+
+def plot_random_cells_variation(data):
+    # Randomly select five (i, j) cells
+    selected_cells = []
+    for _ in range(25):
+        i, j = np.random.randint(0, 32, 2)  # Randomly choose i and j indices
+        selected_cells.append((i, j))
+
+    # Plot line graphs for each selected cell
+    for cell in selected_cells:
+        i, j = cell
+        values = data[i, j, :]
+
+        # Set sensitivity of y-axis to two decimal points
+        plt.plot(values, label=f'Cell ({i}, {j})')
+
+        # Calculate and annotate standard deviation on the graph
+        std_deviation = np.std(values)
+        plt.annotate(f'SD: {std_deviation:.2f}', xy=(len(values) - 1, values[-1]), xytext=(10, -10),
+                     textcoords='offset points', ha='right', va='bottom',
+                     bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.5))
+
+    plt.xlabel('Time')
+    plt.ylabel('Cell Value')
+    plt.title('Value Variation of Random Cells with Time')
+    plt.legend()
+    plt.show()
+
 
 # Unpack the values returned by read_csv_data
 data, num_rows = read_csv_data(csv_file_path)
@@ -96,3 +131,6 @@ select_and_plot_deviation(data, start_time=10, end_time=1200)
 # Input a specific time to plot the array graph and print the std deviation
 specified_time = int(input("Enter a specific time (second) to plot the array graph: "))
 plot_array_at_second(data, specified_time)
+
+# Call the new function to plot the value variation of random cells with time
+plot_random_cells_variation(data)
