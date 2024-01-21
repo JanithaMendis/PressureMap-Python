@@ -61,9 +61,7 @@ def select_and_plot_deviation(data, start_time=0, end_time=None):
     #plt.legend()
     plt.show()
 
-    # Input a specific time to plot the array graph and print the std deviation
-    specified_time = int(input("Enter a specific time (second) to plot the array graph: "))
-    plot_array_at_second(data, specified_time)
+
 
 
 def plot_array_at_second(data, time):
@@ -96,3 +94,7 @@ print(f"Number of rows in the CSV file: {num_rows}")
 
 # Call the function to select and plot deviation for four random cells in a specific time range
 select_and_plot_deviation(data, start_time=10, end_time=1200)
+
+# Input a specific time to plot the array graph and print the std deviation
+specified_time = int(input("Enter a specific time (second) to plot the array graph: "))
+plot_array_at_second(data, specified_time)
