@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 
 csv_file_path = 'C:\\Users\\Janitha Mendis\\PycharmProjects\\PressureMap1\\testing10kgMM.csv'
 
-
 def read_csv_data(file_path):
     with open(file_path) as f:
         csv_reader = csv.reader(f)
@@ -23,7 +22,6 @@ def read_csv_data(file_path):
                     data[i, j, z] = float(row[index])
 
     return data, num_rows
-
 
 def select_and_plot_deviation(data, start_time=0, end_time=None):
     # Randomly select four (i, j) cells with at least some non-zero values
@@ -62,30 +60,30 @@ def select_and_plot_deviation(data, start_time=0, end_time=None):
     plt.show()
 
 
-
-
 def plot_array_at_second(data, time):
-    values_at_time = data[:, :, time]
+    # Generate time values for t, t+10, t-10
+    time_values = [time, time + 10, time - 10]
 
-    # Select non-zero values for standard deviation calculation
-    non_zero_values = values_at_time[values_at_time != 0]
-    std_deviation = np.std(non_zero_values)
+    for t in time_values:
+        values_at_time = data[:, :, t]
 
-    plt.imshow(values_at_time, cmap='viridis', origin='upper', extent=(0, 32, 0, 32), vmin=np.min(values_at_time),
-               vmax=np.max(values_at_time))
+        # Select non-zero values for standard deviation calculation
+        non_zero_values = values_at_time[values_at_time != 0]
+        std_deviation = np.std(non_zero_values)
 
-    for i in range(32):
-        for j in range(32):
-            plt.text(j + 0.5, i + 0.5, f'{int(values_at_time[i, j])}', color='black',
-                     ha='center', va='center', fontsize=8)
+        plt.imshow(values_at_time, cmap='viridis', origin='upper', extent=(0, 32, 0, 32),
+                   vmin=np.min(values_at_time), vmax=np.max(values_at_time))
 
+        for i in range(32):
+            for j in range(32):
+                plt.text(j + 0.5, i + 0.5, f'{int(values_at_time[i, j])}', color='black',
+                         ha='center', va='center', fontsize=8)
 
-    plt.colorbar(label='Cell Value')
-    plt.title(f'Cell Values at Second {time} with Non-Zero Std Deviation: {std_deviation:.2f}')
-    plt.xlabel('Column Index')
-    plt.ylabel('Row Index')
-    plt.show()
-
+        plt.colorbar(label='Cell Value')
+        plt.title(f'Cell Values at Second {time} with Non-Zero Std Deviation: {std_deviation:.2f}')
+        plt.xlabel('Column Index')
+        plt.ylabel('Row Index')
+        plt.show()
 
 # Unpack the values returned by read_csv_data
 data, num_rows = read_csv_data(csv_file_path)
