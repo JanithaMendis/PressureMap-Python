@@ -28,7 +28,7 @@ def read_csv_data(file_path):
 def select_and_plot_deviation(data, start_time=0, end_time=None):
     # Randomly select four (i, j) cells with at least some non-zero values
     selected_cells = []
-    for _ in range(8):
+    for _ in range(25):
         i, j = np.random.randint(0, 32, 2)  # Randomly choose i and j indices
         while np.all(data[i, j, :] == 0):  # Ensure at least some non-zero values in the selected cell
             i, j = np.random.randint(0, 32, 2)
@@ -61,6 +61,33 @@ def select_and_plot_deviation(data, start_time=0, end_time=None):
     #plt.legend()
     plt.show()
 
+    # Input a specific time to plot the array graph and print the std deviation
+    specified_time = int(input("Enter a specific time (second) to plot the array graph: "))
+    plot_array_at_second(data, specified_time)
+
+
+def plot_array_at_second(data, time):
+    values_at_time = data[:, :, time]
+
+    # Select non-zero values for standard deviation calculation
+    non_zero_values = values_at_time[values_at_time != 0]
+    std_deviation = np.std(non_zero_values)
+
+    plt.imshow(values_at_time, cmap='viridis', origin='upper', extent=(0, 32, 0, 32), vmin=np.min(values_at_time),
+               vmax=np.max(values_at_time))
+
+    for i in range(32):
+        for j in range(32):
+            plt.text(j + 0.5, i + 0.5, f'{int(values_at_time[i, j])}', color='black',
+                     ha='center', va='center', fontsize=8)
+
+
+    plt.colorbar(label='Cell Value')
+    plt.title(f'Cell Values at Second {time} with Non-Zero Std Deviation: {std_deviation:.2f}')
+    plt.xlabel('Column Index')
+    plt.ylabel('Row Index')
+    plt.show()
+
 
 # Unpack the values returned by read_csv_data
 data, num_rows = read_csv_data(csv_file_path)
@@ -68,4 +95,4 @@ print(data.shape)  # (32, 32, number_rows)
 print(f"Number of rows in the CSV file: {num_rows}")
 
 # Call the function to select and plot deviation for four random cells in a specific time range
-select_and_plot_deviation(data, start_time=0, end_time=1200)
+select_and_plot_deviation(data, start_time=10, end_time=1200)
