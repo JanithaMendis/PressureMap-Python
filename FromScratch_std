@@ -1,0 +1,60 @@
+import csv
+import numpy as np
+import matplotlib.pyplot as plt
+
+csv_file_path = 'C:\\Users\\Janitha Mendis\\PycharmProjects\\PressureMap1\\testing10kgMM.csv'
+
+def read_csv_data(file_path):
+    with open(file_path) as f:
+        csv_reader = csv.reader(f)
+        header = next(csv_reader)  # skip header
+        num_rows = sum(1 for _ in csv_reader)  # Count the number of rows in the CSV file
+        f.seek(0)  # Reset file pointer to the beginning
+
+        # Skip the header again for data processing
+        next(csv_reader)
+
+        data = np.zeros((32, 32, num_rows))
+        for z, row in enumerate(csv_reader):
+            for i in range(32):
+                for j in range(32):
+                    index = i * 32 + j + 12  # Adjusted index to start from column 12
+                    data[i, j, z] = float(row[index])
+
+    return data, num_rows
+
+def select_and_plot_deviation(data):
+    # Randomly select four (i, j) cells with at least some non-zero values
+    selected_cells = []
+    for _ in range(8):
+        i, j = np.random.randint(0, 32, 2)  # Randomly choose i and j indices
+        while np.all(data[i, j, :] <= 3):  # Ensure at least some non-zero values in the selected cell
+            i, j = np.random.randint(0, 32, 2)
+        selected_cells.append((i, j))
+
+    # Plot line graphs for each selected cell
+    for cell in selected_cells:
+        i, j = cell
+        values = data[i, j, :]
+        time_steps = np.arange(len(values))
+
+        plt.plot(time_steps, values, label=f'Cell ({i}, {j})')
+
+        # Calculate and annotate standard deviation on the graph
+        std_deviation = np.std(values)
+        plt.annotate(f'SD: {std_deviation:.2f}', xy=(time_steps[-1], values[-1]), xytext=(10, -10),
+                     textcoords='offset points', ha='right', va='bottom', bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.5))
+
+    plt.xlabel('Time')
+    plt.ylabel('Cell Value')
+    plt.title('Deviation of Cell Values with Different Time Readings')
+    #plt.legend()
+    plt.show()
+
+# Unpack the values returned by read_csv_data
+data, num_rows = read_csv_data(csv_file_path)
+print(data.shape)  # (32, 32, number_rows)
+print(f"Number of rows in the CSV file: {num_rows}")
+
+# Call the function to select and plot deviation for four random cells
+select_and_plot_deviation(data)
