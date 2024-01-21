@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 csv_file_path = 'C:\\Users\\Janitha Mendis\\PycharmProjects\\PressureMap1\\testing10kgMM.csv'
 
+
 def read_csv_data(file_path):
     with open(file_path) as f:
         csv_reader = csv.reader(f)
@@ -23,12 +24,13 @@ def read_csv_data(file_path):
 
     return data, num_rows
 
-def select_and_plot_deviation(data):
+
+def select_and_plot_deviation(data, start_time=0, end_time=None):
     # Randomly select four (i, j) cells with at least some non-zero values
     selected_cells = []
     for _ in range(8):
         i, j = np.random.randint(0, 32, 2)  # Randomly choose i and j indices
-        while np.all(data[i, j, :] <= 3):  # Ensure at least some non-zero values in the selected cell
+        while np.all(data[i, j, :] == 0):  # Ensure at least some non-zero values in the selected cell
             i, j = np.random.randint(0, 32, 2)
         selected_cells.append((i, j))
 
@@ -36,6 +38,13 @@ def select_and_plot_deviation(data):
     for cell in selected_cells:
         i, j = cell
         values = data[i, j, :]
+
+        # Filter values based on the specified time range
+        if end_time is not None:
+            values = values[start_time:end_time]
+        else:
+            values = values[start_time:]
+
         time_steps = np.arange(len(values))
 
         plt.plot(time_steps, values, label=f'Cell ({i}, {j})')
@@ -43,7 +52,8 @@ def select_and_plot_deviation(data):
         # Calculate and annotate standard deviation on the graph
         std_deviation = np.std(values)
         plt.annotate(f'SD: {std_deviation:.2f}', xy=(time_steps[-1], values[-1]), xytext=(10, -10),
-                     textcoords='offset points', ha='right', va='bottom', bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.5))
+                     textcoords='offset points', ha='right', va='bottom',
+                     bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.5))
 
     plt.xlabel('Time')
     plt.ylabel('Cell Value')
@@ -51,10 +61,11 @@ def select_and_plot_deviation(data):
     #plt.legend()
     plt.show()
 
+
 # Unpack the values returned by read_csv_data
 data, num_rows = read_csv_data(csv_file_path)
 print(data.shape)  # (32, 32, number_rows)
 print(f"Number of rows in the CSV file: {num_rows}")
 
-# Call the function to select and plot deviation for four random cells
-select_and_plot_deviation(data)
+# Call the function to select and plot deviation for four random cells in a specific time range
+select_and_plot_deviation(data, start_time=0, end_time=1200)
