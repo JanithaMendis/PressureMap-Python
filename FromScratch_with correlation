@@ -108,65 +108,67 @@ def plot_random_cells_variation(data):
     plt.legend()
     plt.show()
 
-def analyze_and_plot_cross_correlation(data):
-    non_zero_cells = []  # List to store coordinates of non-zero cells
+
+def analyze_and_plot_cross_correlation(data, threshold=5):
+    valid_cells = []  # List to store coordinates of cells containing more than the threshold values
 
     for i in range(32):
         for j in range(32):
-            if np.count_nonzero(data[i, j, :]) >= 500:
-                non_zero_cells.append((i, j))
+            if np.count_nonzero(data[i, j, :] > 5) > threshold:
+                valid_cells.append((i, j))
 
-    if not non_zero_cells:
-        print("No cells with at least 100 non-zero entries found.")
+    if not valid_cells:
+        print(f"No cells containing more than {threshold} values found.")
         return
 
-    # Find the minimum bounding rectangle for all non-zero cells
-    min_i = min(cell[0] for cell in non_zero_cells)
-    max_i = max(cell[0] for cell in non_zero_cells)
-    min_j = min(cell[1] for cell in non_zero_cells)
-    max_j = max(cell[1] for cell in non_zero_cells)
+    # Find the minimum bounding rectangle for all valid cells
+    min_i = min(cell[0] for cell in valid_cells)
+    max_i = max(cell[0] for cell in valid_cells)
+    min_j = min(cell[1] for cell in valid_cells)
+    max_j = max(cell[1] for cell in valid_cells)
 
-    # Extract the smallest 2D array containing all non-zero cells
+    # Extract the smallest 2D array containing all valid cells
     selected_array = data[min_i:max_i + 1, min_j:max_j + 1, :]
 
     # Print the size of the selected 2D array
-    print(f"Selected 2D Array Size: {selected_array.shape}")
+    print(f"Selected 2D Array Size: {selected_array.shape[:2]}")
 
-    # Plot the selected 2D array
-    plt.figure(figsize=(8, 8))
-    plt.imshow(selected_array[:, :, 0], cmap='viridis', origin='upper', extent=(min_j, max_j + 1, max_i + 1, min_i))
-    plt.title('Selected 2D Array with Non-zero Cells')
-    plt.xlabel('Cell Column Index')
-    plt.ylabel('Cell Row Index')
-    plt.colorbar(label='Cell Value')
-    plt.show()
-
-    # Plot cross-correlations within the selected 2D array
+    # Compute cross-correlations within the selected 2D array
     selected_size = selected_array.shape[:2]
-    cross_corr_array = np.zeros(selected_size + selected_size)  # Initialize array for cross-correlations
+    cross_corr_array = np.zeros((selected_size[0], selected_size[1]))  # Initialize array for cross-correlations
 
     for i in range(selected_size[0]):
         for j in range(selected_size[1]):
+            values_cell1 = selected_array[i, j, :]
+            cross_correlations = np.zeros((selected_size[0], selected_size[1]))
+
             for k in range(selected_size[0]):
                 for l in range(selected_size[1]):
-                    values_cell1 = selected_array[i, j, :]
                     values_cell2 = selected_array[k, l, :]
                     cross_corr = np.max(np.correlate(values_cell1, values_cell2, mode='full'))
-                    cross_corr_array[i, j, k, l] = cross_corr
+                    cross_correlations[k, l] = cross_corr
 
-    # Plot the cross-correlations within the selected 2D array
-    plt.figure(figsize=(14, 12))
+            cross_corr_array[i, j] = np.mean(cross_correlations)
+
+    # Normalize cross-correlation values to be in the range of -1 to 1
+    cross_corr_array = cross_corr_array / np.max(np.abs(cross_corr_array))
+
+    # Plot the cross-correlation array
+    plt.figure(figsize=(12, 10))
+    plt.imshow(cross_corr_array, cmap='viridis', vmin=-1, vmax=1, interpolation='none')
+
+    # Annotate the plot with cross-correlation values
     for i in range(selected_size[0]):
         for j in range(selected_size[1]):
-            for k in range(selected_size[0]):
-                for l in range(selected_size[1]):
-                    plt.subplot(selected_size[0], selected_size[1], i * selected_size[1] + j + 1)
-                    plt.plot(cross_corr_array[i, j, k, l], label=f'({i + min_i}, {j + min_j}) - ({k + min_i}, {l + min_j})')
-                    plt.title(f'Cross-correlation for Cells ({i + min_i}, {j + min_j}) and ({k + min_i}, {l + min_j})')
+            plt.text(j, i, f'{cross_corr_array[i, j]:.2f}', color='white',
+                     ha='center', va='center', fontsize=8)
 
-    plt.tight_layout()
+    plt.colorbar(label='Cross-correlation')
+    plt.title('Cross-correlation of Line Graphs between Corresponding Cells')
+    plt.xlabel('Cell Column Index')
+    plt.ylabel('Cell Row Index')
     plt.show()
-
+    
 
 def calculate_and_plot_mean_square(data):
     mean_square_array = np.zeros((32, 32))  # Initialize the array to store mean square values
@@ -210,8 +212,10 @@ select_and_plot_deviation(data, start_time=10, end_time=1200)
 # Call the new function to plot the value variation of random cells with time
 #plot_random_cells_variation(data)
 
-# Call the updated function
-analyze_and_plot_cross_correlation(data)
+# Call the updated function with a threshold of 100
+analyze_and_plot_cross_correlation(data, threshold=100)
+
+
 
 # Call the function to calculate and plot mean square values
 #calculate_and_plot_mean_square(data)
