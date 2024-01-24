@@ -110,13 +110,14 @@ def plot_random_cells_variation(data):
 
 def analyze_and_plot_cross_correlation(data):
     non_zero_cells = []  # List to store coordinates of non-zero cells
+
     for i in range(32):
         for j in range(32):
-            if np.any(data[i, j, :] != 0):
+            if np.count_nonzero(data[i, j, :]) >= 500:
                 non_zero_cells.append((i, j))
 
     if not non_zero_cells:
-        print("No non-zero cells found.")
+        print("No cells with at least 100 non-zero entries found.")
         return
 
     # Find the minimum bounding rectangle for all non-zero cells
@@ -127,6 +128,18 @@ def analyze_and_plot_cross_correlation(data):
 
     # Extract the smallest 2D array containing all non-zero cells
     selected_array = data[min_i:max_i + 1, min_j:max_j + 1, :]
+
+    # Print the size of the selected 2D array
+    print(f"Selected 2D Array Size: {selected_array.shape}")
+
+    # Plot the selected 2D array
+    plt.figure(figsize=(8, 8))
+    plt.imshow(selected_array[:, :, 0], cmap='viridis', origin='upper', extent=(min_j, max_j + 1, max_i + 1, min_i))
+    plt.title('Selected 2D Array with Non-zero Cells')
+    plt.xlabel('Cell Column Index')
+    plt.ylabel('Cell Row Index')
+    plt.colorbar(label='Cell Value')
+    plt.show()
 
     # Plot cross-correlations within the selected 2D array
     selected_size = selected_array.shape[:2]
@@ -197,7 +210,7 @@ select_and_plot_deviation(data, start_time=10, end_time=1200)
 # Call the new function to plot the value variation of random cells with time
 #plot_random_cells_variation(data)
 
-# Call the function to analyze and plot cross-correlation
+# Call the updated function
 analyze_and_plot_cross_correlation(data)
 
 # Call the function to calculate and plot mean square values
