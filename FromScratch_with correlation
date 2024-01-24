@@ -168,7 +168,7 @@ def analyze_and_plot_cross_correlation(data, threshold=5):
     plt.xlabel('Cell Column Index')
     plt.ylabel('Cell Row Index')
     plt.show()
-    
+
 
 def calculate_and_plot_mean_square(data):
     mean_square_array = np.zeros((32, 32))  # Initialize the array to store mean square values
