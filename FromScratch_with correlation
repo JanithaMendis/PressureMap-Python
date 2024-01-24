@@ -1,115 +1,3 @@
-import csv
-import numpy as np
-import matplotlib.pyplot as plt
-
-csv_file_path = 'C:\\Users\\Janitha Mendis\\PycharmProjects\\PressureMap1\\testing10kgMM.csv'
-
-
-def read_csv_data(file_path):
-    with open(file_path) as f:
-        csv_reader = csv.reader(f)
-        header = next(csv_reader)  # skip header
-        num_rows = sum(1 for _ in csv_reader)  # Count the number of rows in the CSV file
-        f.seek(0)  # Reset file pointer to the beginning
-        # Skip the header again for data processing
-        next(csv_reader)
-        data = np.zeros((32, 32, num_rows))
-        for z, row in enumerate(csv_reader):
-            for i in range(32):
-                for j in range(32):
-                    index = i * 32 + j + 12  # Adjusted index to start from column 12
-                    data[i, j, z] = float(row[index])
-
-    return data, num_rows
-
-
-def select_and_plot_deviation(data, start_time=0, end_time=None):
-    # Randomly select four (i, j) cells with at least some non-zero values
-    selected_cells = []
-    for _ in range(25):
-        i, j = np.random.randint(0, 32, 2)  # Randomly choose i and j indices
-        while np.all(data[i, j, :] == 0):  # Ensure at least some non-zero values in the selected cell
-            i, j = np.random.randint(0, 32, 2)
-        selected_cells.append((i, j))
-    # Plot line graphs for each selected cell
-    for cell in selected_cells:
-        i, j = cell
-        values = data[i, j, :]
-        # Filter values based on the specified time range
-        if end_time is not None:
-            values = values[start_time:end_time]
-        else:
-            values = values[start_time:]
-        time_steps = np.arange(len(values))
-        plt.plot(time_steps, values, label=f'Cell ({i}, {j})')
-        # Calculate and annotate standard deviation on the graph
-        std_deviation = np.std(values)
-        plt.annotate(f'SD: {std_deviation:.2f}', xy=(time_steps[-1], values[-1]), xytext=(10, -10),
-                     textcoords='offset points', ha='right', va='bottom',
-                     bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.5))
-    plt.xlabel('Time')
-    plt.ylabel('Cell Value')
-    plt.title('Deviation of Cell Values with Different Time Readings')
-    #plt.legend()
-    plt.show()
-
-
-def plot_array_at_second(data, time):
-    # Generate time values for t, t+10, t-10
-    time_values = [time, time + 10, time - 10]
-    for t in time_values:
-        values_at_time = data[:, :, t]
-        # Select non-zero values for standard deviation calculation
-        non_zero_values = values_at_time[values_at_time != 0]
-        std_deviation = np.std(non_zero_values)
-        plt.imshow(values_at_time, cmap='viridis', origin='upper', extent=(0, 32, 0, 32),
-                   vmin=np.min(values_at_time), vmax=np.max(values_at_time))
-        for i in range(32):
-            for j in range(32):
-                plt.text(j + 0.5, i + 0.5, f'{int(values_at_time[i, j])}', color='black',
-                         ha='center', va='center', fontsize=8)
-
-        # Annotate standard deviation among non-zero cells
-        plt.annotate(f'Non-Zero SD: {std_deviation:.2f}', xy=(0.5, 32.5), xytext=(0, 10),
-                     textcoords='offset points', ha='center', va='bottom',
-                     bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.5))
-
-        plt.colorbar(label='Cell Value')
-        plt.title(f'Cell Values at Second {time} with Non-Zero Std Deviation: {std_deviation:.2f}')
-        plt.xlabel('Column Index')
-        plt.ylabel('Row Index')
-        plt.show()
-
-
-def plot_random_cells_variation(data):
-    # Randomly select five (i, j) cells
-    selected_cells = []
-    for _ in range(25):
-        i, j = np.random.randint(0, 32, 2)  # Randomly choose i and j indices
-        selected_cells.append((i, j))
-
-    # Plot line graphs for each selected cell
-    for cell in selected_cells:
-        i, j = cell
-        values = data[i, j, :]
-
-        # Set sensitivity of y-axis to two decimal points
-        plt.plot(values, label=f'Cell ({i}, {j})')
-
-        # Calculate and annotate standard deviation on the graph
-        std_deviation = np.std(values)
-        plt.annotate(f'SD: {std_deviation:.2f}', xy=(len(values) - 1, values[-1]), xytext=(10, -10),
-                     textcoords='offset points', ha='right', va='bottom',
-                     bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.5))
-
-    plt.xlabel('Time')
-    plt.ylabel('Cell Value')
-    plt.title('Value Variation of Random Cells with Time')
-    plt.legend()
-    plt.show()
-
-
-def analyze_and_plot_cross_correlation(data, threshold=5):
     valid_cells = []  # List to store coordinates of cells containing more than the threshold values
 
     for i in range(32):
@@ -135,88 +23,45 @@ def analyze_and_plot_cross_correlation(data, threshold=5):
 
     # Compute cross-correlations within the selected 2D array
     selected_size = selected_array.shape[:2]
-    cross_corr_array = np.zeros((selected_size[0], selected_size[1]))  # Initialize array for cross-correlations
+    cross_corr_array = np.zeros((selected_size[0] * selected_size[1], selected_size[0] * selected_size[1]))  # Initialize array for cross-correlations
 
-    for i in range(selected_size[0]):
-        for j in range(selected_size[1]):
-            values_cell1 = selected_array[i, j, :]
-            cross_correlations = np.zeros((selected_size[0], selected_size[1]))
+    # Create labels for cells (s1, s2, ..., sn)
+    cell_labels = [f's{i+1}' for i in range(selected_size[0] * selected_size[1])]
 
-            for k in range(selected_size[0]):
-                for l in range(selected_size[1]):
-                    values_cell2 = selected_array[k, l, :]
-                    cross_corr = np.max(np.correlate(values_cell1, values_cell2, mode='full'))
-                    cross_correlations[k, l] = cross_corr
+    # Map each cell's label to its position in the array
+    label_to_position = {label: (i // selected_size[1], i % selected_size[1]) for i, label in enumerate(cell_labels)}
 
-            cross_corr_array[i, j] = np.mean(cross_correlations)
+    for i in range(selected_size[0] * selected_size[1]):
+        for j in range(i, selected_size[0] * selected_size[1]):
+            label_cell1, label_cell2 = cell_labels[i], cell_labels[j]
+            position_cell1, position_cell2 = label_to_position[label_cell1], label_to_position[label_cell2]
+
+            values_cell1 = pd.Series(selected_array[position_cell1[0], position_cell1[1], :])
+            values_cell2 = pd.Series(selected_array[position_cell2[0], position_cell2[1], :])
+
+            cross_corr = values_cell1.corr(values_cell2)
+            cross_corr_array[i, j] = cross_corr
+            #cross_corr_array[j, i] = cross_corr  # Mirror values across the diagonal
 
     # Normalize cross-correlation values to be in the range of -1 to 1
-    cross_corr_array = cross_corr_array / np.max(np.abs(cross_corr_array))
+    #cross_corr_array = cross_corr_array / np.max(np.abs(cross_corr_array))
 
     # Plot the cross-correlation array
     plt.figure(figsize=(12, 10))
     plt.imshow(cross_corr_array, cmap='viridis', vmin=-1, vmax=1, interpolation='none')
 
     # Annotate the plot with cross-correlation values
-    for i in range(selected_size[0]):
-        for j in range(selected_size[1]):
-            plt.text(j, i, f'{cross_corr_array[i, j]:.2f}', color='white',
-                     ha='center', va='center', fontsize=8)
-
-    plt.colorbar(label='Cross-correlation')
-    plt.title('Cross-correlation of Line Graphs between Corresponding Cells')
-    plt.xlabel('Cell Column Index')
-    plt.ylabel('Cell Row Index')
-    plt.show()
-
-
-def calculate_and_plot_mean_square(data):
-    mean_square_array = np.zeros((32, 32))  # Initialize the array to store mean square values
-
-    for i in range(32):
-        for j in range(32):
-            if np.any(data[i, j, :] != 0):
-                values_cell = data[i, j, :]
-                mean_square = np.mean((values_cell - np.mean(values_cell))**2)
-                mean_square_array[i, j] = mean_square
-
-    # Plot the mean square values in a 32x32 array plot with annotations
-    plt.figure(figsize=(12, 10))
-    plt.imshow(mean_square_array, cmap='viridis', interpolation='none')
-
-    # Annotate the plot with mean square values
-    for i in range(32):
-        for j in range(32):
-            if mean_square_array[i, j] != 0:
-                fontsize = min(8, 1600 / max(32, 32))  # Adjust fontsize dynamically
-                plt.text(j, i, f'{mean_square_array[i, j]:.4f}', color='white',
+    for i in range(selected_size[0] * selected_size[1]):
+        for j in range(selected_size[0] * selected_size[1]):
+            if cross_corr_array[i, j] != 0:
+                fontsize = min(8, 1600 / max(selected_size[0], selected_size[1]))  # Adjust fontsize dynamically
+                plt.text(j, i, f'{cross_corr_array[i, j]:.2f}', color='white',
                          ha='center', va='center', fontsize=fontsize)
 
-    plt.colorbar(label='Mean Square')
-    plt.title('Mean Square Error of Cell Values Variation with Time')
-    plt.xlabel('Cell Column Index')
-    plt.ylabel('Cell Row Index')
+    plt.xticks(np.arange(selected_size[0] * selected_size[1]), cell_labels, rotation='vertical')
+    plt.yticks(np.arange(selected_size[0] * selected_size[1]), cell_labels)
+    plt.colorbar(label='Cross-correlation')
+    plt.title('Cross-correlation of Line Graphs between Corresponding Cells')
+    plt.xlabel('Cell Label')
+    plt.ylabel('Cell Label')
     plt.show()
-
-
-# Unpack the values returned by read_csv_data
-data, num_rows = read_csv_data(csv_file_path)
-print(data.shape)  # (32, 32, number_rows)
-print(f"Number of rows in the CSV file: {num_rows}")
-# Call the function to select and plot deviation for four random cells in a specific time range
-select_and_plot_deviation(data, start_time=10, end_time=1200)
-# Input a specific time to plot the array graph and print the std deviation
-#specified_time = int(input("Enter a specific time (second) to plot the array graph: "))
-#plot_array_at_second(data, specified_time)
-
-# Call the new function to plot the value variation of random cells with time
-#plot_random_cells_variation(data)
-
-# Call the updated function with a threshold of 100
-analyze_and_plot_cross_correlation(data, threshold=100)
-
-
-
-# Call the function to calculate and plot mean square values
-#calculate_and_plot_mean_square(data)
-
