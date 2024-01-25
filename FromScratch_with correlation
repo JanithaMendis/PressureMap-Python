@@ -134,20 +134,29 @@ def analyze_and_plot_cross_correlation(data, threshold=5):
     # Print the size of the selected 2D array
     print(f"Selected 2D Array Size: {selected_array.shape[:2]}")
 
-    # Compute cross-correlations within the selected 2D array
+    # Compute mean square errors within the selected 2D array
     selected_size = selected_array.shape[:2]
-    cross_corr_array = np.zeros((selected_size[0] * selected_size[1], selected_size[0] * selected_size[1]))  # Initialize array for cross-correlations
+    cross_corr_array = np.zeros((selected_size[0] * selected_size[1], selected_size[0] * selected_size[1]))  # Initialize array for mean square errors
 
     # Create labels for cells (s1, s2, ..., sn)
     cell_labels = [f's{i+1}' for i in range(selected_size[0] * selected_size[1])]
-
+    print('cell_labels')
+    print(cell_labels)
     # Map each cell's label to its position in the array
     label_to_position = {label: (i // selected_size[1], i % selected_size[1]) for i, label in enumerate(cell_labels)}
+    print('emunerte cell labes')
+    print(list(enumerate(cell_labels)))
+    print('lable to position')
+    print(label_to_position)
 
     for i in range(selected_size[0] * selected_size[1]):
-        for j in range(i, selected_size[0] * selected_size[1]):
-            label_cell1, label_cell2 = cell_labels[i], cell_labels[j]
-            position_cell1, position_cell2 = label_to_position[label_cell1], label_to_position[label_cell2]
+        for j in range(selected_size[0] * selected_size[1]):
+
+            label_cell1 = cell_labels[i]
+            label_cell2 = cell_labels[j]
+            position_cell1 = label_to_position[label_cell1]
+            position_cell2 = label_to_position[label_cell2]
+
 
             values_cell1 = pd.Series(selected_array[position_cell1[0], position_cell1[1], :])
             values_cell2 = pd.Series(selected_array[position_cell2[0], position_cell2[1], :])
@@ -156,8 +165,6 @@ def analyze_and_plot_cross_correlation(data, threshold=5):
             cross_corr_array[i, j] = cross_corr
             #cross_corr_array[j, i] = cross_corr  # Mirror values across the diagonal
 
-    # Normalize cross-correlation values to be in the range of -1 to 1
-    #cross_corr_array = cross_corr_array / np.max(np.abs(cross_corr_array))
 
     # Plot the cross-correlation array
     plt.figure(figsize=(12, 10))
