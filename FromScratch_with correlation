@@ -146,8 +146,14 @@ def analyze_and_plot_cross_correlation(data, threshold=5):
 
     for i in range(selected_size[0] * selected_size[1]):
         for j in range(i, selected_size[0] * selected_size[1]):
-            label_cell1, label_cell2 = cell_labels[i], cell_labels[j]
-            position_cell1, position_cell2 = label_to_position[label_cell1], label_to_position[label_cell2]
+
+            #label_cell1, label_cell2 = cell_labels[i], cell_labels[j]
+            #position_cell1, position_cell2 = label_to_position[label_cell1], label_to_position[label_cell2]
+
+            label_cell1 = cell_labels[i]
+            label_cell2 = cell_labels[j]
+            position_cell1 = label_to_position[label_cell1]
+            position_cell2 = label_to_position[label_cell2]
 
             values_cell1 = pd.Series(selected_array[position_cell1[0], position_cell1[1], :])
             values_cell2 = pd.Series(selected_array[position_cell2[0], position_cell2[1], :])
@@ -156,8 +162,6 @@ def analyze_and_plot_cross_correlation(data, threshold=5):
             cross_corr_array[i, j] = cross_corr
             #cross_corr_array[j, i] = cross_corr  # Mirror values across the diagonal
 
-    # Normalize cross-correlation values to be in the range of -1 to 1
-    #cross_corr_array = cross_corr_array / np.max(np.abs(cross_corr_array))
 
     # Plot the cross-correlation array
     plt.figure(figsize=(12, 10))
@@ -239,7 +243,7 @@ def calculate_and_plot_mean_square_error(data, threshold=5):
 
     # Annotate the plot with mean square error values
     for i in range(selected_size[0] * selected_size[1]):
-        for j in range(selected_size[0] * selected_size[1]):
+        for j in range(i,selected_size[0] * selected_size[1]):
             if mse_array[i, j] != 0:
                 fontsize = min(8, 1600 / max(selected_size[0], selected_size[1]))  # Adjust fontsize dynamically
                 plt.text(j, i, f'{mse_array[i, j]:.2f}', color='white',
