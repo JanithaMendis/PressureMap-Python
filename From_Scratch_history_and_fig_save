@@ -57,7 +57,7 @@ def select_and_plot_deviation(data,folder_name, start_time=0, end_time=None):
     #plt.legend()
 
     fig_name = 'Deviation of Cell Values with Different Time Readings.png'
-    save_fig(fig_name, folder_name)
+    save_fig(fig_name, subfolder)
     plt.show()
 
 
@@ -87,7 +87,7 @@ def plot_array_at_second(data, time,folder_name):
         plt.ylabel('Row Index')
 
         fig_name = 'Specific time With Non-Zero Std Deviation' + str(t) + '.png'
-        save_fig(fig_name , folder_name)
+        save_fig(fig_name , subfolder)
         plt.show()
 
 
@@ -118,7 +118,7 @@ def plot_random_cells_variation(data,folder_name):
     plt.legend()
 
     fig_name = 'Value Variation of Random Cells with Time.png'
-    save_fig(fig_name,folder_name)
+    save_fig(fig_name,subfolder)
     plt.show()
 
 def selecting_smallest_array (data,threshold=5):
@@ -195,7 +195,7 @@ def analyze_and_plot_cross_correlation(selected_array, selected_size,folder_name
     plt.ylabel('Cell Label')
 
     fig_name = 'Crr_cllrtn.png'
-    save_fig(fig_name, folder_name)
+    save_fig(fig_name, subfolder)
     plt.show()
 
 
@@ -249,33 +249,73 @@ def calculate_and_plot_mean_square_error(selected_array, selected_size,folder_na
     plt.ylabel('Cell Label')
 
     fig_name = 'MSQE.png'
-    save_fig(fig_name,folder_name)
+    save_fig(fig_name,subfolder)
     plt.show()
 
-def save_fig (fig_name,folder_name):
-    sv_folder = 'Saved_plots' #main folder which the plots will save
+def save_fig (fig_name,subfolder):
 
-    # Get the current date and time as a datetime object
-    current_datetime = datetime.now()
-    # Convert the datetime object to a formatted string
-    date_time_stamp = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
-    # Remove the seconds part
-    timestamp_without_seconds = current_datetime.replace(second=0).strftime('%Y-%m-%d %H:%M')
-    # Create a folder-friendly timestamp by replacing colons with underscores
-    timestamp_for_folder = timestamp_without_seconds.replace(":", "_")
-
-    if not os.path.exists(sv_folder):
-        os.makedirs(sv_folder)
-    subfolder = os.path.join(sv_folder,folder_name + timestamp_for_folder)
-    if not os.path.exists(subfolder):
-        os.makedirs(subfolder)
     # Save the figure in the subfolder
     plt.savefig(os.path.join(subfolder, fig_name))
 
 
+def update_database(history_path, date_time_stamp, full_file_path, actual_weight, position, file_name):
+    try:
+        df_history = pd.read_csv(history_path)
+    except FileNotFoundError:
+        df_history = pd.DataFrame(
+            columns=['File', 'Timestamp','actual_weight' ,'Position', 'File_name',
+                     ])
+
+    if df_history.empty or 'File' not in df_history.columns or 'Timestamp' not in df_history.columns:
+        df_history = pd.DataFrame(
+            columns=['File', 'Timestamp', 'actual_weight', 'Position', 'File_name'
+                     ])
+
+    new_record = {'File': full_file_path, 'Timestamp': date_time_stamp, 'actual_weight': actual_weight, 'Position': position, 'File_name': file_name,
+                  }
+    df_history = pd.concat([df_history, pd.DataFrame([new_record])], ignore_index=True)
+
+    df_history.to_csv(history_path, index=False)
+
 
 
 folder_name = input(f'folder name') #sub folder which the plots will save when the code ran once
+
+sv_folder = 'Saved_plots'  # main folder which the plots will save
+
+# Get the current date and time as a datetime object
+current_datetime = datetime.now()
+# Convert the datetime object to a formatted string
+date_time_stamp = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
+# Remove the seconds part
+timestamp_without_seconds = current_datetime.replace(second=0).strftime('%Y-%m-%d %H:%M')
+# Create a folder-friendly timestamp by replacing colons with underscores
+timestamp_for_folder = timestamp_without_seconds.replace(":", "_")
+print (timestamp_for_folder)
+if not os.path.exists(sv_folder):
+    os.makedirs(sv_folder)
+subfolder = os.path.join(sv_folder, folder_name + timestamp_for_folder)
+if not os.path.exists(subfolder):
+    os.makedirs(subfolder)
+print("Subfolder:", subfolder)
+
+
+history_path = 'New_readings_history.csv'
+main_path = r'C:\Users\Janitha Mendis\PycharmProjects\PressureMap1'
+full_file_path = os.path.join(main_path, sv_folder, folder_name + timestamp_for_folder)
+
+
+if __name__ == "__main__":
+    positions = ['left upper corner', 'right upper corner', 'Upper middle', 'left middle', 'middle middle',
+                 'right middle', 'Bottom middle', 'left bottom corner', 'right bottom corner']
+
+    actual_weight = float(input("What is the actual weight? (in Kg): "))
+    print("Select the position of the weights:")
+    for i, pos in enumerate(positions, start=1):
+        print(f"{i}. {pos}")
+
+    selected_position_index = int(input("Enter the corresponding number for the position: "))
+    selected_position = positions[selected_position_index - 1]
 
 
 # Unpack the values returned by read_csv_data
@@ -301,7 +341,5 @@ analyze_and_plot_cross_correlation(selected_array, selected_size, folder_name)
 # Call the new function to calculate and plot mean square errors with a threshold of 5
 calculate_and_plot_mean_square_error(selected_array, selected_size, folder_name)
 
-
-
-
-
+#Update the code run record in to the New_Hstory_reading, CSV file
+update_database(history_path, date_time_stamp, full_file_path, actual_weight, selected_position, folder_name + timestamp_for_folder)
