@@ -6,7 +6,7 @@ from datetime import datetime
 import os
 
 
-csv_file_path = 'C:\\Users\\Janitha Mendis\\PycharmProjects\\PressureMap1\\testing10kgMM.csv'
+csv_file_path = 'C:\\Users\\Janitha Mendis\\PycharmProjects\\PressureMap1\\10kgDataAnlysep2.csv'
 
 
 def read_csv_data(file_path):
@@ -401,19 +401,19 @@ print(data.shape)  # (32, 32, number_rows)
 print(f"Number of rows in the CSV file: {num_rows}")
 
 # Call the function to select and plot deviation for four random cells in a specific time range
-##select_and_plot_deviation(data,folder_name, start_time=10, end_time=1200)
+select_and_plot_deviation(data,folder_name, start_time=10, end_time=1200)
 # Input a specific time to plot the array graph and print the std deviation
 ##specified_time = int(input("Enter a specific time (second) to plot the array graph: "))
 ##plot_array_at_second(data, specified_time,folder_name)
 
 # Call the new function to plot the value variation of random cells with time
-##plot_random_cells_variation(data,folder_name)
+#plot_random_cells_variation(data,folder_name)
 
 #Finding the smallest array that contains non-zero(greater than 5) values than the theshould count
 selected_array, selected_size = selecting_smallest_array(data, threshold=100)
 
 # Call the updated function with a threshold of 100
-##analyze_and_plot_cross_correlation(selected_array, selected_size, folder_name)
+analyze_and_plot_cross_correlation(selected_array, selected_size, folder_name)
 
 # Call the new function to calculate and plot mean square errors with a threshold of 5
 label_to_position = calculate_and_plot_mean_square_error(selected_array, selected_size, folder_name)
