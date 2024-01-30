@@ -275,7 +275,7 @@ def calculate_and_plot_mean_square_error(selected_array, selected_size,folder_na
     fig_name = 'MSQE.png'
     save_fig(fig_name,subfolder)
     plt.show()
-    return(label_to_position)
+    return label_to_position
 
 def save_fig (fig_name,subfolder):
 
@@ -283,20 +283,20 @@ def save_fig (fig_name,subfolder):
     plt.savefig(os.path.join(subfolder, fig_name))
 
 
-def update_database(history_path, date_time_stamp, full_file_path, actual_weight, position, file_name):
+def update_database(history_path, date_time_stamp, full_file_path, actual_weight, position, file_name,average_pressure):
     try:
         df_history = pd.read_csv(history_path)
     except FileNotFoundError:
         df_history = pd.DataFrame(
-            columns=['File', 'Timestamp','actual_weight' ,'Position', 'File_name',
+            columns=['File', 'Timestamp','actual_weight' ,'Position', 'File_name', 'Average Pressure Value'
                      ])
 
     if df_history.empty or 'File' not in df_history.columns or 'Timestamp' not in df_history.columns:
         df_history = pd.DataFrame(
-            columns=['File', 'Timestamp', 'actual_weight', 'Position', 'File_name'
+            columns=['File', 'Timestamp', 'actual_weight', 'Position', 'File_name','Average Pressure Value'
                      ])
 
-    new_record = {'File': full_file_path, 'Timestamp': date_time_stamp, 'actual_weight': actual_weight, 'Position': position, 'File_name': file_name,
+    new_record = {'File': full_file_path, 'Timestamp': date_time_stamp, 'actual_weight': actual_weight, 'Position': position, 'File_name': file_name, 'Average Pressure Value': average_pressure
                   }
     df_history = pd.concat([df_history, pd.DataFrame([new_record])], ignore_index=True)
 
@@ -336,18 +336,25 @@ def average_value_cells_variation(selected_array,selected_size,folder_name):
     # Calculate average values along the third axis (axis=2)
     averages = np.mean(selected_array, axis=2)
     # Plotting line graphs for each row
+    paata = ['.-r','.-b','.-g','.-k','--.r','--.k', '--.b']
+    sum  = 0
     for i in range(selected_size[0]):
-        plt.plot(averages[i], label=f'Row {i + 1}')
+        plt.plot(averages[i,:], paata[i], label=f'Row {i + 1}')
+        sum = sum + np.sum(averages[i])
+    average_pressure = sum/(selected_size[0] * selected_size[1])
+    print(average_pressure)
 
     # Adding labels and legend
     plt.xlabel('Column')
     plt.ylabel('Average Value')
-    plt.title('Line Graphs for Each Row')
+    plt.title(f'Line Graphs for Each Row, Overall Average pressure:{sum/(selected_size[0] * selected_size[1])}')
     plt.legend()
 
+    fig_name = 'average_value_cells_variation.png'
+    save_fig(fig_name, subfolder)
     # Show the plot
     plt.show()
-
+    return average_pressure
 
 folder_name = input(f'folder name') #sub folder which the plots will save when the code ran once
 
@@ -411,10 +418,12 @@ selected_array, selected_size = selecting_smallest_array(data, threshold=100)
 # Call the new function to calculate and plot mean square errors with a threshold of 5
 label_to_position = calculate_and_plot_mean_square_error(selected_array, selected_size, folder_name)
 
-#Update the code run record in to the New_Hstory_reading, CSV file
-update_database(history_path, date_time_stamp, full_file_path, actual_weight, selected_position, folder_name + timestamp_for_folder)
-
-
 plot_deviation(selected_array,folder_name,label_to_position)
 
-average_value_cells_variation(selected_array,selected_size,folder_name)
+average_pressure = average_value_cells_variation(selected_array,selected_size,folder_name)
+
+
+#Update the code run record in to the New_Hstory_reading, CSV file
+update_database(history_path, date_time_stamp, full_file_path, actual_weight, selected_position, folder_name + timestamp_for_folder, average_pressure)
+
+
